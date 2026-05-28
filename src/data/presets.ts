@@ -10,9 +10,9 @@ export const PRESETS: ChordProgression[] = [
     isMinor: false,
     difficulty: "beginner",
     chords: [
-      { root: "D", quality: "m7", beats: 4, defaultScale: "dorian" },
-      { root: "G", quality: "7", beats: 4, defaultScale: "mixolydian" },
-      { root: "C", quality: "maj7", beats: 8, defaultScale: "ionian" },
+      { root: "D", quality: "m7", beats: 4, defaultScale: "arpeggio" },
+      { root: "G", quality: "7", beats: 4, defaultScale: "arpeggio" },
+      { root: "C", quality: "maj7", beats: 8, defaultScale: "arpeggio" },
     ],
     description:
       "ジャズで最頻出のツーファイブワン。スケールを切り替えて語彙を広げよう。",
@@ -27,50 +27,12 @@ export const PRESETS: ChordProgression[] = [
     isMinor: true,
     difficulty: "intermediate",
     chords: [
-      { root: "B", quality: "m7b5", beats: 4, defaultScale: "locrian-nat2" },
-      { root: "E", quality: "7", beats: 4, defaultScale: "phrygian-dominant" },
-      { root: "A", quality: "m7", beats: 8, defaultScale: "harmonic-minor" },
+      { root: "B", quality: "m7b5", beats: 4, defaultScale: "arpeggio" },
+      { root: "E", quality: "7", beats: 4, defaultScale: "arpeggio" },
+      { root: "A", quality: "m7", beats: 8, defaultScale: "arpeggio" },
     ],
     description: "マイナーキー定番。E7にHMP5↓を使うのが伝統。",
     tip: "Bm7♭5にはロクリアン♮2、E7にはフリジアンドミナントが鉄板。",
-  },
-  {
-    id: "pop-komuro",
-    title: "小室進行",
-    key: "Am",
-    bpm: 90,
-    category: "pop",
-    isMinor: true,
-    difficulty: "beginner",
-    chords: [
-      { root: "A", quality: "m", beats: 4, defaultScale: "aeolian" },
-      { root: "F", quality: "maj", beats: 4, defaultScale: "lydian" },
-      { root: "G", quality: "maj", beats: 4, defaultScale: "ionian" },
-      { root: "C", quality: "maj", beats: 4, defaultScale: "ionian" },
-    ],
-    description: "VIm-IV-V-I「小室進行」。J-POP定番。",
-    tip: "まずトライアド(R-3-5)だけで弾いてみよう。",
-  },
-  {
-    id: "pop-canon",
-    title: "カノン進行",
-    key: "C",
-    bpm: 85,
-    category: "pop",
-    isMinor: false,
-    difficulty: "beginner",
-    chords: [
-      { root: "C", quality: "maj", beats: 4, defaultScale: "ionian" },
-      { root: "G", quality: "maj", beats: 4, defaultScale: "ionian" },
-      { root: "A", quality: "m", beats: 4, defaultScale: "aeolian" },
-      { root: "E", quality: "m", beats: 4, defaultScale: "phrygian" },
-      { root: "F", quality: "maj", beats: 4, defaultScale: "ionian" },
-      { root: "C", quality: "maj", beats: 4, defaultScale: "ionian" },
-      { root: "F", quality: "maj", beats: 4, defaultScale: "ionian" },
-      { root: "G", quality: "maj", beats: 4, defaultScale: "ionian" },
-    ],
-    description: "パッヘルベルのカノン。J-POPでも頻出のド定番。",
-    tip: "3和音中心。トライアドだけで進行を体感しよう。",
   },
   {
     id: "blues-12bar-a",
@@ -82,18 +44,18 @@ export const PRESETS: ChordProgression[] = [
     difficulty: "intermediate",
     // クイックチェンジ版（2小節目が IV=D7）。1小節 = 1コード（4拍）
     chords: [
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 1
-      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 2
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 3
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 4
-      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 5
-      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 6
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 7
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 8
-      { root: "E", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 9
-      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 10
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 11
-      { root: "E", quality: "7", beats: 4, defaultScale: "altered" }, // 12 ターンアラウンド
+      { root: "A", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 1
+      { root: "D", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 2
+      { root: "A", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 3
+      { root: "A", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 4
+      { root: "D", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 5
+      { root: "D", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 6
+      { root: "A", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 7
+      { root: "A", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 8
+      { root: "E", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 9
+      { root: "D", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 10
+      { root: "A", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 11
+      { root: "E", quality: "7", beats: 4, defaultScale: "arpeggio" }, // 12 ターンアラウンド
     ],
     chordChart: {
       repeat: true,

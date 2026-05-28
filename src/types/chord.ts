@@ -32,7 +32,7 @@ export interface ChordProgression {
   bpm: number;
   isMinor: boolean; // マイナーキーか(移調時のキー名表示に使用)
   chords: ChordSymbol[];
-  category: "jazz" | "pop" | "blues";
+  category: "jazz" | "blues";
   difficulty: "beginner" | "intermediate" | "advanced";
   description: string;
   tip?: string;

@@ -21,14 +21,16 @@ export function useProgressionPlayback({ progression }: Options) {
 
   const beatCountRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // 再生ループから最新の状態を参照するための ref
+  // 再生ループから最新の状態を参照するための ref（描画後に同期し、
+  // 描画中の ref 書き込みを避ける）
   const stateRef = useRef({ currentIndex, bpm, transposeSemitones, useSampler });
-  stateRef.current = { currentIndex, bpm, transposeSemitones, useSampler };
-
   const samplerRef = useRef(sampler);
-  samplerRef.current = sampler;
   const progRef = useRef(progression);
-  progRef.current = progression;
+  useEffect(() => {
+    stateRef.current = { currentIndex, bpm, transposeSemitones, useSampler };
+    samplerRef.current = sampler;
+    progRef.current = progression;
+  });
 
   const transposedChords = progression.chords.map((c) =>
     transposeChord(c, transposeSemitones),
@@ -163,13 +165,8 @@ export function useProgressionPlayback({ progression }: Options) {
     };
   }, [clearLoop]);
 
-  // 進行が変わったらリセット
-  useEffect(() => {
-    reset();
-    setBpm(progression.bpm);
-    setTransposeSemitones(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progression.id]);
+  // 進行の切り替えは page 側で key={progression.id} により再マウントされ、
+  // useState の初期値で自然にリセットされる（アンマウント時に loop も停止）。
 
   return {
     sampler,

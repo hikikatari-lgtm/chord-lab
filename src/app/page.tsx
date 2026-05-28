@@ -1,9 +1,8 @@
 import PresetCard from "@/components/PresetCard";
 import { PRESETS } from "@/data/presets";
 
-const CATEGORIES: { id: "jazz" | "pop" | "blues"; label: string; emoji: string }[] = [
+const CATEGORIES: { id: "jazz" | "blues"; label: string; emoji: string }[] = [
   { id: "jazz", label: "Jazz", emoji: "🎷" },
-  { id: "pop", label: "Pop", emoji: "🎤" },
   { id: "blues", label: "Blues", emoji: "🎸" },
 ];
 

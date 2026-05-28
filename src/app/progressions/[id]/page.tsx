@@ -14,5 +14,5 @@ export default async function ProgressionPage({
   const { id } = await params;
   const progression = getProgression(id);
   if (!progression) notFound();
-  return <ProgressionView progression={progression} />;
+  return <ProgressionView key={progression.id} progression={progression} />;
 }
