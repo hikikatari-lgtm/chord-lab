@@ -42,4 +42,10 @@ export interface ChordProgression {
     repeat?: boolean; // ||:  :|| を表示
     rows: number[][]; // 行 × 小節（chords[] のインデックス）
   };
+  // 実音源（バッキングトラック）。指定するとシンセ再生の代わりに
+  // この音源を再生し、ハイライトを currentTime から同期する。
+  audio?: {
+    url: string; // public/ からのパス
+    countInBars?: number; // 1小節目が始まる前のカウントイン小節数
+  };
 }

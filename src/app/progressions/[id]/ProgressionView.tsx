@@ -33,6 +33,7 @@ export default function ProgressionView({
     currentIndex,
     isPlaying,
     countIn,
+    isAudioMode,
     bpm,
     transposeSemitones,
     useSampler,
@@ -63,9 +64,10 @@ export default function ProgressionView({
     [progression, transposeSemitones],
   );
 
-  // マウント時にピアノ音源を先読み（再生ボタン押下時に即鳴るように）
+  // マウント時にピアノ音源を先読み（再生ボタン押下時に即鳴るように）。
+  // 実音源モードでは不要なので読み込まない（試聴時に遅延ロード）。
   useEffect(() => {
-    sampler.init();
+    if (!isAudioMode) sampler.init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -118,11 +120,13 @@ export default function ProgressionView({
         </div>
       ) : null}
 
-      <AudioStatus
-        status={sampler.status}
-        error={sampler.error}
-        onLoad={sampler.init}
-      />
+      {!isAudioMode ? (
+        <AudioStatus
+          status={sampler.status}
+          error={sampler.error}
+          onLoad={sampler.init}
+        />
+      ) : null}
 
       {countIn !== null ? (
         <div className="mb-3 flex items-center justify-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 py-3">
@@ -135,14 +139,16 @@ export default function ProgressionView({
         </div>
       ) : null}
 
-      <section className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3.5">
-        <div className="mb-2 text-[11px] text-neutral-400">🎹 キー</div>
-        <KeySelector
-          progression={progression}
-          transposeSemitones={transposeSemitones}
-          onChange={handleChangeKey}
-        />
-      </section>
+      {!isAudioMode ? (
+        <section className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3.5">
+          <div className="mb-2 text-[11px] text-neutral-400">🎹 キー</div>
+          <KeySelector
+            progression={progression}
+            transposeSemitones={transposeSemitones}
+            onChange={handleChangeKey}
+          />
+        </section>
+      ) : null}
 
       <section className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3.5">
         <div className="mb-2 text-[11px] text-neutral-400">
@@ -197,6 +203,7 @@ export default function ProgressionView({
           bpm={bpm}
           useSampler={useSampler}
           displayMode={displayMode}
+          audioMode={isAudioMode}
           onTogglePlay={togglePlay}
           onReset={reset}
           onChangeBpm={setBpm}

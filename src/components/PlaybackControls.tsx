@@ -8,6 +8,7 @@ interface Props {
   bpm: number;
   useSampler: boolean;
   displayMode: DisplayMode;
+  audioMode?: boolean; // 実音源モード：音源切替・テンポは固定なので非表示
   onTogglePlay: () => void;
   onReset: () => void;
   onChangeBpm: (bpm: number) => void;
@@ -21,6 +22,7 @@ export default function PlaybackControls({
   bpm,
   useSampler,
   displayMode,
+  audioMode = false,
   onTogglePlay,
   onReset,
   onChangeBpm,
@@ -48,27 +50,31 @@ export default function PlaybackControls({
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="text-[11px] text-neutral-400">音源</span>
-        <div className="inline-flex rounded-lg border border-neutral-800 bg-neutral-900 p-[3px]">
-          <button
-            type="button"
-            onClick={() => onChangeSampler(true)}
-            className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
-              useSampler ? "bg-amber-400 text-black" : "text-neutral-400"
-            }`}
-          >
-            🎹 ピアノ
-          </button>
-          <button
-            type="button"
-            onClick={() => onChangeSampler(false)}
-            className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
-              !useSampler ? "bg-amber-400 text-black" : "text-neutral-400"
-            }`}
-          >
-            🥁 クリック
-          </button>
-        </div>
+        {!audioMode ? (
+          <>
+            <span className="text-[11px] text-neutral-400">音源</span>
+            <div className="inline-flex rounded-lg border border-neutral-800 bg-neutral-900 p-[3px]">
+              <button
+                type="button"
+                onClick={() => onChangeSampler(true)}
+                className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
+                  useSampler ? "bg-amber-400 text-black" : "text-neutral-400"
+                }`}
+              >
+                🎹 ピアノ
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeSampler(false)}
+                className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
+                  !useSampler ? "bg-amber-400 text-black" : "text-neutral-400"
+                }`}
+              >
+                🥁 クリック
+              </button>
+            </div>
+          </>
+        ) : null}
 
         <span className="ml-2 text-[11px] text-neutral-400">表示</span>
         <div className="inline-flex rounded-lg border border-neutral-800 bg-neutral-900 p-[3px]">
@@ -93,20 +99,26 @@ export default function PlaybackControls({
         </div>
       </div>
 
-      <div>
-        <div className="mb-1.5 flex justify-between text-[11px]">
-          <span>テンポ</span>
-          <span className="font-mono">{bpm} BPM</span>
+      {!audioMode ? (
+        <div>
+          <div className="mb-1.5 flex justify-between text-[11px]">
+            <span>テンポ</span>
+            <span className="font-mono">{bpm} BPM</span>
+          </div>
+          <input
+            type="range"
+            min={40}
+            max={200}
+            value={bpm}
+            onChange={(e) => onChangeBpm(Number(e.target.value))}
+            className="w-full accent-amber-400"
+          />
         </div>
-        <input
-          type="range"
-          min={40}
-          max={200}
-          value={bpm}
-          onChange={(e) => onChangeBpm(Number(e.target.value))}
-          className="w-full accent-amber-400"
-        />
-      </div>
+      ) : (
+        <div className="text-[11px] text-neutral-500">
+          🎵 実音源（{bpm} BPM 固定）に合わせて再生・ハイライトします。
+        </div>
+      )}
     </div>
   );
 }

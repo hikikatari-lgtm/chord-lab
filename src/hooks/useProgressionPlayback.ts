@@ -25,6 +25,10 @@ export function useProgressionPlayback({ progression }: Options) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countInRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countingInRef = useRef(false);
+  // 実音源モード用
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const audioSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastCountRef = useRef<number | null>(null);
   // 再生ループから最新の状態を参照するための ref（描画後に同期し、
   // 描画中の ref 書き込みを避ける）
   const stateRef = useRef({ currentIndex, bpm, transposeSemitones, useSampler });
@@ -39,6 +43,8 @@ export function useProgressionPlayback({ progression }: Options) {
   const transposedChords = progression.chords.map((c) =>
     transposeChord(c, transposeSemitones),
   );
+
+  const isAudioMode = !!progression.audio;
 
   const soundChord = useCallback(
     (index: number, beatDurationMs: number) => {
@@ -127,16 +133,104 @@ export function useProgressionPlayback({ progression }: Options) {
     }, beatDurationMs);
   }, [clearLoop, soundChord]);
 
+  // 実音源の currentTime から現在の小節（コード）とカウントイン拍を同期する
+  const audioTick = useCallback(() => {
+    const el = audioElRef.current;
+    const prog = progRef.current;
+    if (!el || !prog.audio) return;
+    if (el.ended) {
+      if (audioSyncRef.current) clearInterval(audioSyncRef.current);
+      audioSyncRef.current = null;
+      lastCountRef.current = null;
+      setCountIn(null);
+      setIsPlaying(false);
+      setCurrentIndex(0);
+      return;
+    }
+    const beatDurSec = 60 / prog.bpm;
+    const countInBeats = (prog.audio.countInBars ?? 0) * 4;
+    const countInSec = countInBeats * beatDurSec;
+    const t = el.currentTime;
+    if (t < countInSec) {
+      const beat = Math.min(countInBeats, Math.floor(t / beatDurSec) + 1);
+      if (lastCountRef.current !== beat) {
+        lastCountRef.current = beat;
+        setCountIn(beat);
+      }
+      if (stateRef.current.currentIndex !== 0) setCurrentIndex(0);
+    } else {
+      if (lastCountRef.current !== null) {
+        lastCountRef.current = null;
+        setCountIn(null);
+      }
+      const totalBeats = prog.chords.reduce((s, c) => s + (c.beats || 4), 0);
+      let b = ((t - countInSec) / beatDurSec) % totalBeats;
+      let idx = prog.chords.length - 1;
+      for (let i = 0; i < prog.chords.length; i++) {
+        const cb = prog.chords[i].beats || 4;
+        if (b < cb) {
+          idx = i;
+          break;
+        }
+        b -= cb;
+      }
+      if (stateRef.current.currentIndex !== idx) setCurrentIndex(idx);
+    }
+  }, []);
+
+  const ensureAudioEl = useCallback(() => {
+    if (!audioElRef.current && progRef.current.audio) {
+      const a = new Audio(progRef.current.audio.url);
+      a.preload = "auto";
+      audioElRef.current = a;
+    }
+    return audioElRef.current;
+  }, []);
+
+  const playAudio = useCallback(async () => {
+    const el = ensureAudioEl();
+    if (!el) return;
+    try {
+      el.currentTime = 0;
+      await el.play();
+    } catch {
+      /* noop */
+    }
+    lastCountRef.current = null;
+    setIsPlaying(true);
+    if (audioSyncRef.current) clearInterval(audioSyncRef.current);
+    audioSyncRef.current = setInterval(audioTick, 80);
+  }, [audioTick, ensureAudioEl]);
+
+  const stopAudio = useCallback(() => {
+    if (audioSyncRef.current) {
+      clearInterval(audioSyncRef.current);
+      audioSyncRef.current = null;
+    }
+    const el = audioElRef.current;
+    if (el) {
+      el.pause();
+      el.currentTime = 0;
+    }
+    lastCountRef.current = null;
+  }, []);
+
   const stop = useCallback(() => {
     clearLoop();
     clearCountIn();
+    stopAudio();
     setIsPlaying(false);
     samplerRef.current.releaseAll();
-  }, [clearLoop, clearCountIn]);
+  }, [clearLoop, clearCountIn, stopAudio]);
 
   const togglePlay = useCallback(async () => {
     if (isPlaying) {
       stop();
+      return;
+    }
+    // 実音源モード：バッキングトラックを再生し、ハイライトは currentTime に同期
+    if (progRef.current.audio) {
+      await playAudio();
       return;
     }
     // ユーザー操作起点で音声コンテキストを解錠（iOS対策）
@@ -151,18 +245,31 @@ export function useProgressionPlayback({ progression }: Options) {
     }
     setIsPlaying(true);
     runCountIn(() => startLoop());
-  }, [isPlaying, useSampler, sampler, stop, startLoop, runCountIn]);
+  }, [isPlaying, useSampler, sampler, stop, startLoop, runCountIn, playAudio]);
 
   const reset = useCallback(() => {
     clearLoop();
     clearCountIn();
+    stopAudio();
     setIsPlaying(false);
     setCurrentIndex(0);
     beatCountRef.current = 0;
-  }, [clearLoop, clearCountIn]);
+  }, [clearLoop, clearCountIn, stopAudio]);
 
   const jumpTo = useCallback(
     (index: number) => {
+      // 実音源モード：その小節の頭へシーク
+      if (progRef.current.audio) {
+        const prog = progRef.current;
+        const beatDurSec = 60 / prog.bpm;
+        const countInSec = (prog.audio?.countInBars ?? 0) * 4 * beatDurSec;
+        let beatsBefore = 0;
+        for (let i = 0; i < index; i++) beatsBefore += prog.chords[i].beats || 4;
+        const el = audioElRef.current;
+        if (el) el.currentTime = countInSec + beatsBefore * beatDurSec;
+        setCurrentIndex(index);
+        return;
+      }
       setCurrentIndex(index);
       beatCountRef.current = 0;
       // 単発試聴
@@ -193,9 +300,11 @@ export function useProgressionPlayback({ progression }: Options) {
     samplerRef.current.playChord([bass, ...upper], 2);
   }, [sampler]);
 
-  // BPM / 移調が変わったら再生中はループ再構築（カウントイン中は除く）
+  // BPM / 移調が変わったら再生中はループ再構築（カウントイン中・実音源モードは除く）
   useEffect(() => {
-    if (isPlaying && !countingInRef.current) startLoop();
+    if (isPlaying && !countingInRef.current && !progRef.current.audio) {
+      startLoop();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bpm, transposeSemitones]);
 
@@ -204,6 +313,8 @@ export function useProgressionPlayback({ progression }: Options) {
     return () => {
       clearLoop();
       if (countInRef.current) clearTimeout(countInRef.current);
+      if (audioSyncRef.current) clearInterval(audioSyncRef.current);
+      if (audioElRef.current) audioElRef.current.pause();
       samplerRef.current.releaseAll();
     };
   }, [clearLoop]);
@@ -216,6 +327,7 @@ export function useProgressionPlayback({ progression }: Options) {
     currentIndex,
     isPlaying,
     countIn,
+    isAudioMode,
     bpm,
     transposeSemitones,
     useSampler,
