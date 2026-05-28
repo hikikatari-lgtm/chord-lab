@@ -36,4 +36,10 @@ export interface ChordProgression {
   difficulty: "beginner" | "intermediate" | "advanced";
   description: string;
   tip?: string;
+  // コード譜（小節グリッド）。各セルは chords[] のインデックスを参照。
+  // 再生中の現在コードと連動してハイライトされる。
+  chordChart?: {
+    repeat?: boolean; // ||:  :|| を表示
+    rows: number[][]; // 行 × 小節（chords[] のインデックス）
+  };
 }

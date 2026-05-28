@@ -80,17 +80,31 @@ export const PRESETS: ChordProgression[] = [
     category: "blues",
     isMinor: false,
     difficulty: "intermediate",
+    // クイックチェンジ版（2小節目が IV=D7）。1小節 = 1コード（4拍）
     chords: [
-      { root: "A", quality: "7", beats: 16, defaultScale: "blues" },
-      { root: "D", quality: "7", beats: 8, defaultScale: "mixolydian" },
-      { root: "A", quality: "7", beats: 8, defaultScale: "blues" },
-      { root: "E", quality: "7", beats: 4, defaultScale: "mixolydian" },
-      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" },
-      { root: "A", quality: "7", beats: 4, defaultScale: "blues" },
-      { root: "E", quality: "7", beats: 4, defaultScale: "altered" },
+      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 1
+      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 2
+      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 3
+      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 4
+      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 5
+      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 6
+      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 7
+      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 8
+      { root: "E", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 9
+      { root: "D", quality: "7", beats: 4, defaultScale: "mixolydian" }, // 10
+      { root: "A", quality: "7", beats: 4, defaultScale: "blues" }, // 11
+      { root: "E", quality: "7", beats: 4, defaultScale: "altered" }, // 12 ターンアラウンド
     ],
-    description: "ブルースの基本「I-IV-V」12小節進行。",
-    tip: "ターンアラウンドのE7でオルタードに切り替えるとジャズブルース風。",
+    chordChart: {
+      repeat: true,
+      rows: [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [8, 9, 10, 11],
+      ],
+    },
+    description: "ブルースの基本「I-IV-V」12小節進行（クイックチェンジ）。",
+    tip: "ターンアラウンド(12小節目)のE7でオルタードに切り替えるとジャズブルース風。",
   },
 ];
 

@@ -8,6 +8,7 @@ import { useProgressionPlayback } from "@/hooks/useProgressionPlayback";
 import { transposeNote } from "@/lib/notes";
 import AudioStatus from "@/components/AudioStatus";
 import ProgressionBar from "@/components/ProgressionBar";
+import ChordChart from "@/components/ChordChart";
 import ChordDisplay from "@/components/ChordDisplay";
 import ChordFretboard from "@/components/ChordFretboard";
 import FretboardLegend from "@/components/FretboardLegend";
@@ -141,6 +142,22 @@ export default function ProgressionView({
           onJump={jumpTo}
         />
       </section>
+
+      {progression.chordChart ? (
+        <section className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3.5">
+          <div className="mb-2 text-[11px] text-neutral-400">
+            🎼 コード譜{" "}
+            <span className="text-neutral-600">- タップでジャンプ</span>
+          </div>
+          <ChordChart
+            rows={progression.chordChart.rows}
+            repeat={progression.chordChart.repeat}
+            chords={transposedChords}
+            currentIndex={currentIndex}
+            onJump={jumpTo}
+          />
+        </section>
+      ) : null}
 
       <section className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3.5">
         <ChordDisplay
