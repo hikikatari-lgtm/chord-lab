@@ -7,17 +7,20 @@ export type SamplerStatus = "idle" | "loading" | "ready" | "error";
 
 export function usePianoSampler() {
   const samplerRef = useRef<Tone.Sampler | null>(null);
+  const loadedRef = useRef(false); // 同期的に参照できる準備完了フラグ
+  const loadPromiseRef = useRef<Promise<void> | null>(null);
   const fallbackCtxRef = useRef<AudioContext | null>(null);
   const [status, setStatus] = useState<SamplerStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const init = useCallback(async () => {
-    if (samplerRef.current || status === "loading") return;
+  // サンプルの読み込み（音声コンテキストの解錠は不要。fetch/decode のみ）
+  // 既に読み込み中／完了なら同じ Promise を返す（多重呼び出し安全）
+  const init = useCallback((): Promise<void> => {
+    if (loadPromiseRef.current) return loadPromiseRef.current;
     setStatus("loading");
     setError(null);
-    try {
-      await Tone.start();
-      await new Promise<void>((resolve, reject) => {
+    loadPromiseRef.current = new Promise<void>((resolve) => {
+      try {
         const sampler = new Tone.Sampler({
           urls: {
             A0: "A0.mp3",
@@ -29,24 +32,36 @@ export function usePianoSampler() {
           },
           release: 1.5,
           baseUrl: "https://tonejs.github.io/audio/salamander/",
-          onload: () => resolve(),
-          onerror: (e) => reject(e),
+          onload: () => {
+            loadedRef.current = true;
+            setStatus("ready");
+            resolve();
+          },
+          onerror: (e) => {
+            setError(
+              e instanceof Error ? e.message : "音源の読み込みに失敗しました",
+            );
+            setStatus("error");
+            resolve(); // 失敗してもクリック音にフォールバックできるよう resolve
+          },
         }).toDestination();
         sampler.volume.value = -8;
         samplerRef.current = sampler;
-      });
-      setStatus("ready");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "音源の読み込みに失敗しました");
-      setStatus("error");
-    }
-  }, [status]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "音源の初期化に失敗しました");
+        setStatus("error");
+        resolve();
+      }
+    });
+    return loadPromiseRef.current;
+  }, []);
+
+  const isReady = useCallback(() => loadedRef.current, []);
 
   const playChord = useCallback((notes: string[], duration = 0.95) => {
-    const sampler = samplerRef.current;
-    if (!sampler) return;
+    if (!loadedRef.current || !samplerRef.current) return;
     try {
-      sampler.triggerAttackRelease(notes, duration);
+      samplerRef.current.triggerAttackRelease(notes, duration);
     } catch {
       /* noop */
     }
@@ -85,5 +100,5 @@ export function usePianoSampler() {
     }
   }, []);
 
-  return { status, error, init, playChord, releaseAll, playClick };
+  return { status, error, init, isReady, playChord, releaseAll, playClick };
 }

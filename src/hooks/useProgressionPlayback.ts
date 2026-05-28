@@ -42,7 +42,7 @@ export function useProgressionPlayback({ progression }: Options) {
         prog.chords[index],
         stateRef.current.transposeSemitones,
       );
-      if (stateRef.current.useSampler && s.status === "ready") {
+      if (stateRef.current.useSampler && s.isReady()) {
         const beats = chord.beats || 4;
         const dur = ((beats * beatDurationMs) / 1000) * 0.95;
         const { bass, upper } = getChordVoicing(chord);
@@ -96,11 +96,15 @@ export function useProgressionPlayback({ progression }: Options) {
       stop();
       return;
     }
-    if (useSampler && sampler.status !== "ready") {
-      await sampler.init();
-    }
-    if (Tone.getContext().state !== "running") {
+    // ユーザー操作起点で音声コンテキストを解錠（iOS対策）
+    try {
       await Tone.start();
+    } catch {
+      /* noop */
+    }
+    // ピアノ選択時、未ロードなら読み込み完了まで待ってから再生
+    if (useSampler && !sampler.isReady()) {
+      await sampler.init();
     }
     setIsPlaying(true);
     startLoop();
@@ -118,7 +122,7 @@ export function useProgressionPlayback({ progression }: Options) {
       setCurrentIndex(index);
       beatCountRef.current = 0;
       // 単発試聴
-      if (samplerRef.current.status === "ready" && stateRef.current.useSampler) {
+      if (samplerRef.current.isReady() && stateRef.current.useSampler) {
         const chord = transposeChord(
           progRef.current.chords[index],
           stateRef.current.transposeSemitones,
@@ -131,8 +135,12 @@ export function useProgressionPlayback({ progression }: Options) {
   );
 
   const previewCurrent = useCallback(async () => {
-    if (sampler.status !== "ready") await sampler.init();
-    if (Tone.getContext().state !== "running") await Tone.start();
+    try {
+      await Tone.start();
+    } catch {
+      /* noop */
+    }
+    if (!sampler.isReady()) await sampler.init();
     const chord = transposeChord(
       progRef.current.chords[stateRef.current.currentIndex],
       stateRef.current.transposeSemitones,

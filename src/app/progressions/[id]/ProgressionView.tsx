@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { ChordProgression } from "@/types/chord";
 import type { DisplayMode } from "@/types/scale";
@@ -61,7 +61,14 @@ export default function ProgressionView({
     [progression, transposeSemitones],
   );
 
-  const canPlay = !useSampler || sampler.status === "ready";
+  // マウント時にピアノ音源を先読み（再生ボタン押下時に即鳴るように）
+  useEffect(() => {
+    sampler.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 再生ボタンは常に押下可能。ピアノ未ロードなら押下時に読み込んでから再生する
+  const canPlay = true;
 
   const handleChangeScale = (scaleId: string) => {
     setScaleOverrides((prev) => ({ ...prev, [currentIndex]: scaleId }));
