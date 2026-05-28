@@ -18,9 +18,13 @@ export function useProgressionPlayback({ progression }: Options) {
   const [bpm, setBpm] = useState(progression.bpm);
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [useSampler, setUseSampler] = useState(true);
+  // カウントイン中に表示する拍数（1〜4）。再生中/停止中は null
+  const [countIn, setCountIn] = useState<number | null>(null);
 
   const beatCountRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countInRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countingInRef = useRef(false);
   // 再生ループから最新の状態を参照するための ref（描画後に同期し、
   // 描画中の ref 書き込みを避ける）
   const stateRef = useRef({ currentIndex, bpm, transposeSemitones, useSampler });
@@ -63,6 +67,42 @@ export function useProgressionPlayback({ progression }: Options) {
     }
   }, []);
 
+  const clearCountIn = useCallback(() => {
+    if (countInRef.current) {
+      clearTimeout(countInRef.current);
+      countInRef.current = null;
+    }
+    countingInRef.current = false;
+    setCountIn(null);
+  }, []);
+
+  // 再生前に4拍のカウントイン（クリック音、1拍目アクセント）を鳴らし、
+  // 鳴らし終えたら onDone を実行する
+  const runCountIn = useCallback(
+    (onDone: () => void) => {
+      clearCountIn();
+      countingInRef.current = true;
+      const beatDurationMs = 60000 / stateRef.current.bpm;
+      let beat = 1;
+      setCountIn(beat);
+      samplerRef.current.playClick(true);
+      const tick = () => {
+        beat++;
+        if (beat > 4) {
+          countingInRef.current = false;
+          setCountIn(null);
+          onDone();
+          return;
+        }
+        setCountIn(beat);
+        samplerRef.current.playClick(false);
+        countInRef.current = setTimeout(tick, beatDurationMs);
+      };
+      countInRef.current = setTimeout(tick, beatDurationMs);
+    },
+    [clearCountIn],
+  );
+
   const startLoop = useCallback(() => {
     clearLoop();
     beatCountRef.current = 0;
@@ -89,9 +129,10 @@ export function useProgressionPlayback({ progression }: Options) {
 
   const stop = useCallback(() => {
     clearLoop();
+    clearCountIn();
     setIsPlaying(false);
     samplerRef.current.releaseAll();
-  }, [clearLoop]);
+  }, [clearLoop, clearCountIn]);
 
   const togglePlay = useCallback(async () => {
     if (isPlaying) {
@@ -109,15 +150,16 @@ export function useProgressionPlayback({ progression }: Options) {
       await sampler.init();
     }
     setIsPlaying(true);
-    startLoop();
-  }, [isPlaying, useSampler, sampler, stop, startLoop]);
+    runCountIn(() => startLoop());
+  }, [isPlaying, useSampler, sampler, stop, startLoop, runCountIn]);
 
   const reset = useCallback(() => {
     clearLoop();
+    clearCountIn();
     setIsPlaying(false);
     setCurrentIndex(0);
     beatCountRef.current = 0;
-  }, [clearLoop]);
+  }, [clearLoop, clearCountIn]);
 
   const jumpTo = useCallback(
     (index: number) => {
@@ -151,9 +193,9 @@ export function useProgressionPlayback({ progression }: Options) {
     samplerRef.current.playChord([bass, ...upper], 2);
   }, [sampler]);
 
-  // BPM / 移調が変わったら再生中はループ再構築
+  // BPM / 移調が変わったら再生中はループ再構築（カウントイン中は除く）
   useEffect(() => {
-    if (isPlaying) startLoop();
+    if (isPlaying && !countingInRef.current) startLoop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bpm, transposeSemitones]);
 
@@ -161,6 +203,7 @@ export function useProgressionPlayback({ progression }: Options) {
   useEffect(() => {
     return () => {
       clearLoop();
+      if (countInRef.current) clearTimeout(countInRef.current);
       samplerRef.current.releaseAll();
     };
   }, [clearLoop]);
@@ -172,6 +215,7 @@ export function useProgressionPlayback({ progression }: Options) {
     sampler,
     currentIndex,
     isPlaying,
+    countIn,
     bpm,
     transposeSemitones,
     useSampler,

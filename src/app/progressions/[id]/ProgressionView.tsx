@@ -32,6 +32,7 @@ export default function ProgressionView({
     sampler,
     currentIndex,
     isPlaying,
+    countIn,
     bpm,
     transposeSemitones,
     useSampler,
@@ -122,6 +123,17 @@ export default function ProgressionView({
         error={sampler.error}
         onLoad={sampler.init}
       />
+
+      {countIn !== null ? (
+        <div className="mb-3 flex items-center justify-center gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 py-3">
+          <span className="text-xs font-bold text-amber-200">
+            カウントイン
+          </span>
+          <span className="font-mono text-3xl font-bold tabular-nums text-amber-400">
+            {countIn}
+          </span>
+        </div>
+      ) : null}
 
       <section className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-3.5">
         <div className="mb-2 text-[11px] text-neutral-400">🎹 キー</div>
